@@ -49,6 +49,7 @@
 		</pre>
 		<div ng-if="user" style="width: 800px; height: 200px">
 			<h1>Alla vikter</h1>
+			<canvas width="800" height="200" id="line2" class="chart chart-line" chart-dataset-override="datasets2" chart-data="data2" chart-options="options2" chart-click="onClick"></canvas>
 			<canvas width="800" height="200" id="line" class="chart chart-line" chart-data="data" chart-options="options" chart-click="onClick">
 		</canvas>
 		</div>

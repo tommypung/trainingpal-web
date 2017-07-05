@@ -20,17 +20,19 @@ public class WeightRegistratrionServlet extends HttpServlet
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
 		URLPathParameters param = new URLPathParameters("/${home}/register/${weight}", req.getPathInfo());
-		if (!param.isValid())
+		URLPathParameters fake = new URLPathParameters("/${home}/register/${timestamp}/${weight}", req.getPathInfo());
+		if (!param.isValid() && !fake.isValid())
 			throw new ServletException("Invalid parameters: " + param.getError());
 
 		Queue queue = QueueFactory.getDefaultQueue();
-		System.out.println("param = " + param);
 
-		queue.add(TaskOptions.Builder.withPayload(
-				new SaveWeightTask(
-						param.getString("home"),
-						param.getString("weight"),
-						System.currentTimeMillis())
-				));
+		SaveWeightTask wt = null;
+		if (param.isValid())
+		{
+			wt = new SaveWeightTask(param.getString("home"), param.getString("weight"), System.currentTimeMillis());
+			queue.add(TaskOptions.Builder.withPayload(wt));
+		}
+		else
+			new SaveWeightTask(fake.getString("home"), fake.getString("weight"), fake.getLong("timestamp")).run();
 	}
 }
