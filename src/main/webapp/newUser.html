@@ -1,0 +1,12 @@
+<div class="newUser">
+	<h1>Ny användare "{{user.name}}"</h1>
+	<div class="moveWeight" ng-click="moveWeight()">Är du inte en ny
+		användare, klicka här för att rapportera vikten på dig själv istället.</div>
+
+	<div class="newInfo">
+		Namn:  <input type="text" ng-model="newInfo.name" placeholder="{{user.name}}"/><br/>
+		Längd: <input type="text" ng-model="newInfo.length" placeholder="170"/><br/>
+		<input type="button" ng-click="saveNewInfo()" value="Spara"/>
+	</div>
+	<div class="lastWeight">{{lastWeight.kg}}kg</div>
+</div>

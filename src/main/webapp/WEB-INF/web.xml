@@ -14,6 +14,14 @@
     <url-pattern>/weight/*</url-pattern>
   </servlet-mapping>
   <servlet>
+    <servlet-name>UserInfoServlet</servlet-name>
+    <servlet-class>org.svearike.trainingpalweb.UserInfoServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>UserInfoServlet</servlet-name>
+    <url-pattern>/updateUser/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
     <servlet-name>GetWeightStatsServlet</servlet-name>
     <servlet-class>org.svearike.trainingpalweb.GetWeightStatsServlet</servlet-class>
   </servlet>

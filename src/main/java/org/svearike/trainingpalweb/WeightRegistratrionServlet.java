@@ -19,20 +19,23 @@ public class WeightRegistratrionServlet extends HttpServlet
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
-		URLPathParameters param = new URLPathParameters("/${home}/register/${weight}", req.getPathInfo());
-		URLPathParameters fake = new URLPathParameters("/${home}/register/${timestamp}/${weight}", req.getPathInfo());
-		if (!param.isValid() && !fake.isValid())
-			throw new ServletException("Invalid parameters: " + param.getError());
+		URLPathParameters onlyWeight = new URLPathParameters("/${home}/register/${weight}", req.getPathInfo());
+		URLPathParameters withDate = new URLPathParameters("/${home}/register/${timestamp}/${weight}", req.getPathInfo());
+		URLPathParameters withDateSynchronized  = new URLPathParameters("/${home}/register/${timestamp}/${weight}/synchronized", req.getPathInfo());
+		if (!onlyWeight.isValid() && !withDate.isValid() && !withDateSynchronized.isValid())
+			throw new ServletException("Invalid parameters: " + onlyWeight.getError());
 
 		Queue queue = QueueFactory.getDefaultQueue();
 
 		SaveWeightTask wt = null;
-		if (param.isValid())
-		{
-			wt = new SaveWeightTask(param.getString("home"), param.getString("weight"), System.currentTimeMillis());
+		if (onlyWeight.isValid())
+			wt = new SaveWeightTask(onlyWeight.getString("home"), onlyWeight.getString("weight"), System.currentTimeMillis());
+		else if (withDate.isValid())
+			wt = new SaveWeightTask(withDate.getString("home"), withDate.getString("weight"), withDate.getLong("timestamp"));
+		else if (withDateSynchronized.isValid())
+			new SaveWeightTask(withDateSynchronized.getString("home"), withDateSynchronized.getString("weight"), withDateSynchronized.getLong("timestamp")).run();
+
+		if (wt != null)
 			queue.add(TaskOptions.Builder.withPayload(wt));
-		}
-		else
-			new SaveWeightTask(fake.getString("home"), fake.getString("weight"), fake.getLong("timestamp")).run();
 	}
 }

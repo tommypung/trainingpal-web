@@ -1,6 +1,22 @@
-var app = angular.module('Trainingpal', ["chart.js"]);
+var app = angular.module('Trainingpal', ["chart.js", 'ngRoute']);
 
-app.controller('MainController', function($scope, $http, $filter) {
+app.config(['$routeProvider', '$locationProvider',
+  function($routeProvider, $locationProvider) {
+    $routeProvider
+      .when('/newWeight', {
+        templateUrl: 'newWeight.html'
+      })
+      .when('/newUser', {
+        templateUrl: 'newUser.html',
+      })
+      .otherwise({
+    	 templateUrl: 'newWeight.html' 
+      });
+
+    $locationProvider.html5Mode(false);
+}]);
+
+app.controller('MainController', function($scope, $http, $filter, $route, $location) {
 	var homeId = "Tommy";
 	var db = firebase.database();
 
@@ -15,6 +31,15 @@ app.controller('MainController', function($scope, $http, $filter) {
 	};
 	$scope.today = {
 	};
+	$scope.newInfo = {
+			
+	};
+
+	$scope.saveNewInfo = function() {
+		$http({method: "POST", url: "/updateUser/info/" + $scope.user.id, data: $scope.newInfo}).then(function(json) {
+			console.log("Got response from server", json);
+		});
+	}
 
 	function compareOrIncreaseGroupedStats(obj, str, value, date)
 	{
@@ -54,6 +79,11 @@ app.controller('MainController', function($scope, $http, $filter) {
 	}
 
 	function setNewUser(user) {
+		if (user.newAutoCreate)
+			$location.path("/newUser");
+		else
+			$location.path("/newWeight");
+
 		console.log("Setting new user", user);
 		$scope.user = user;
 		$scope.series[0] = user;

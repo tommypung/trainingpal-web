@@ -3,7 +3,9 @@ package org.svearike.trainingpalweb.tasks;
 import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -24,6 +26,7 @@ import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.datastore.TransactionOptions;
 import com.google.appengine.api.taskqueue.DeferredTask;
+import com.google.gson.internal.Pair;
 
 @SuppressWarnings("serial")
 public class SaveWeightTask implements DeferredTask
@@ -81,6 +84,7 @@ public class SaveWeightTask implements DeferredTask
 			Map<String, Object> userMap = new HashMap<>();
 			userMap.put("id", e.getKey().getId());
 			userMap.put("name", e.getProperty("name"));
+			userMap.put("newAutoCreate", e.getProperty("newAutoCreate"));
 			mapUsers.put(e.getKey().getId(), userMap);
 		}
 
@@ -94,8 +98,12 @@ public class SaveWeightTask implements DeferredTask
 		Transaction tx = datastore.beginTransaction(TransactionOptions.Builder.withXG(true));
 		try {
 			user = datastore.get(user.getKey());
-			user.setProperty("lastWeight", Float.parseFloat(mWeight));
-			user.setProperty("lastWeightDate", mDate);
+			if (user.hasProperty("lastWeightDate")
+					&& ((Long) user.getProperty("lastWeightDate")) < mDate)
+			{
+				user.setProperty("lastWeight", Float.parseFloat(mWeight));
+				user.setProperty("lastWeightDate", mDate);
+			}
 			datastore.put(tx, user);
 
 			Entity stats = null;
@@ -139,23 +147,48 @@ public class SaveWeightTask implements DeferredTask
 		stats.setProperty("home", mHome);
 
 		@SuppressWarnings("unchecked")
-		Collection<Double> weight = (Collection<Double>) stats.getProperty("weight");
+		List<Double> weight = (List<Double>) stats.getProperty("weight");
 		if (weight == null)
 			weight = new LinkedList<>();
 
 		@SuppressWarnings("unchecked")
-		Collection<Long> date = (Collection<Long>) stats.getProperty("date");
+		List<Long> date = (List<Long>) stats.getProperty("date");
 		if (date == null)
 			date = new LinkedList<>();
 
 		weight.add(Double.parseDouble(mWeight));
 		date.add(mDate);
 
+		Pair<List<Double>, List<Long>> sorted = sortWeightDate(weight, date);
+
+		weight = sorted.first;
+		date = sorted.second;
 		stats.setProperty("weight", weight);
 		stats.setProperty("date", date);
 
 		datastore.put(tx, stats);
 		return stats;
+	}
+
+	private Pair<List<Double>, List<Long>> sortWeightDate(List<Double> weight, List<Long> date)
+	{
+		List<Pair<Double, Long>> list = new LinkedList<>();
+		for(int i=0;i<weight.size();i++)
+			list.add(new Pair<Double, Long>(weight.get(i), date.get(i)));
+		Collections.sort(list, new Comparator<Pair<Double, Long>>() {
+			@Override public int compare(Pair<Double, Long> o1, Pair<Double, Long> o2) {
+				return o1.second.compareTo(o2.second);
+			}
+		});
+
+		List<Double> dList = new ArrayList<>(list.size());
+		List<Long> lList = new ArrayList<>(list.size());
+		for(Pair<Double, Long> p : list) {
+			dList.add(p.first);
+			lList.add(p.second);
+		}
+
+		return new Pair<>(dList, lList);
 	}
 
 	private List<Entity> findUsers()
