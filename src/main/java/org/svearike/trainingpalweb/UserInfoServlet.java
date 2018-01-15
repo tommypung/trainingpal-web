@@ -29,6 +29,7 @@ public class UserInfoServlet extends HttpServlet
 		JSONObject obj = new JSONObject(rawData);
 		final String name = obj.getString("name");
 		final long length = Long.parseLong(obj.getString("length"));
+		final String image = obj.getString("image");
 
 		Database.updateUser(params.getLong("user"), new OnLoad() {
 			@Override
@@ -36,8 +37,11 @@ public class UserInfoServlet extends HttpServlet
 				e.setProperty("newAutoCreate", false);
 				e.setProperty("name", name);
 				e.setProperty("length", length);
+				e.setProperty("image", image);
 				return true;
 			}
 		});
+		
+		
 	}
 }

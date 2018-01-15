@@ -1,12 +1,15 @@
 
 <div ng-hide="user" class="weigh">
 	<h1>Var god ställ dig på vågen</h1>
-	<h1>{{lastWeight.kg}} KG</h1>
 </div>
 <div ng-show="user" class="view">
+	<img ng-src="{{user.image}}" class="profile" />
+	<div class="weight">
+		<span class="weight">{{user.lastWeight | number:2:2}}</span><span
+			class="kg">kg</span>
+	</div>
 	<h1>Välkommen {{user.name}}</h1>
 </div>
-<h2>Din senaste vägning: {{lastWeight.kg}}</h2>
 <div class="comparedToLastDay">
 	<h3>Jämfört med tidigare dag</h3>
 	<span class="title">Max:</span> <span class="value">{{diff.lastDay.max}}</span>
@@ -23,15 +26,13 @@
 		number:2:2}}kg</span><br />
 </div>
 
-<pre style="font-size: 0.2em">
-{{lastWeight | json}}
-		</pre>
 <div ng-if="user" style="width: 800px; height: 200px">
 	<h1>Alla vikter</h1>
 	<canvas width="800" height="200" id="line2" class="chart chart-line"
 		chart-dataset-override="datasets2" chart-data="data2"
 		chart-options="options2" chart-click="onClick"></canvas>
-	<canvas width="800" height="200" id="line" class="chart chart-line"
-		chart-data="data" chart-options="options" chart-click="onClick">
+	<canvas width="800" height="200" id="todayGraph"
+		class="chart chart-line" chart-data="today.data"
+		chart-options="todayOptions" chart-click="onClick">
 		</canvas>
 </div>

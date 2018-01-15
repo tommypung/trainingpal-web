@@ -1,0 +1,104 @@
+.menu .button {
+	font-size: 20px;
+}
+
+.menu .content {
+	padding: 20px;
+	border: 1px dotted green;
+	background: cyan;
+	color: red;
+}
+
+.view img.profile {
+	width: 150px;
+	height: 150px;
+}
+
+.view div.weight {
+	background-image: url("weight.png");
+	background-size: cover;
+	display: inline-block;
+	position: relative;
+	float: right;
+	width: 125px;
+	height: 150px;
+	width: 125px;
+}
+
+.view div.weight span.weight {
+	display: inline-block;
+	position: absolute;
+	color: white;
+	font-size: 23px;
+	top: 80px;
+	left: 7px;
+	width: 78px;
+	text-align: center;
+	transform: rotateY(31deg) rotateZ(8deg);
+}
+
+.view div.weight span.kg {
+    display: inline-block;
+    position: absolute;
+    color: rgb(220, 220, 220);
+    font-size: 23px;
+    top: 78px;
+    left: 68px;
+    width: 65px;
+    text-align: center;
+    transform: rotateY(52deg) rotateZ(-18deg);
+}
+
+.switchUser .user img {
+	width: 200px;
+	height: 200px;
+}
+
+.switchUser .user {
+	display: inline-block;
+}
+
+.switchUser .user .name {
+	display: block;
+}
+
+.moveWeight .row {
+    border: 1px solid black;
+    width: 260px;
+    margin-top: 20px;
+}
+
+.moveWeight .row.selected {
+	background: cyan;
+}
+
+.moveWeight .weight, .moveWeight .date {
+    display: inline-block;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.moveWeight .userSelect img {
+    width: 150px;
+}
+
+.moveWeight .userSelect {
+    display: inline-block;
+    vertical-align:top;
+    border: 10px dotted green;
+}
+
+.moveWeight .userSelect .user {
+    display: inline-block;
+    margin: 20px;
+}
+
+.moveWeight .userSelect .user span {
+    display: block;
+    text-align: center;
+}
+
+.moveWeight .weights {
+    display: inline-block;
+    vertical-align:top;
+}

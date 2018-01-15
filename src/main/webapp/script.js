@@ -1,24 +1,163 @@
 var app = angular.module('Trainingpal', ["chart.js", 'ngRoute']);
 
 app.config(['$routeProvider', '$locationProvider',
-  function($routeProvider, $locationProvider) {
-    $routeProvider
-      .when('/newWeight', {
-        templateUrl: 'newWeight.html'
-      })
-      .when('/newUser', {
-        templateUrl: 'newUser.html',
-      })
-      .otherwise({
-    	 templateUrl: 'newWeight.html' 
-      });
+	function($routeProvider, $locationProvider) {
+	$routeProvider
+	.when('/newWeight/:user', {
+		templateUrl: 'newWeight.html'
+	})
+	.when('/newWeight', {
+		templateUrl: 'newWeight.html'
+	})
+	.when('/switchUser', {
+		templateUrl: 'switchUser.html', controller: 'SwitchUserController',
+	})
+	.when('/moveWeight', {
+		templateUrl: 'moveWeight.html', controller: 'MoveWeightController'
+	})
+	.when('/selectUserForNewWeight', {
+		templateUrl: 'switchUser.html', controller: 'SelectUserForNewWeightController'
+	})
+	.when('/newUser', {
+		templateUrl: 'newUser.html', controller: 'NewUserController'
+	})
+	.otherwise({
+		templateUrl: 'newWeight.html' 
+	});
 
-    $locationProvider.html5Mode(false);
+	$locationProvider.html5Mode(false);
 }]);
 
-app.controller('MainController', function($scope, $http, $filter, $route, $location) {
+app.service('UserService', ['$rootScope', '$location', function($rootScope, $location) {
+	function UserService() {
+		this.user = null;
+		var outer = this;
+		this.users = null;
+
+		this.selectUser = function(users) {
+			this.users = users;
+			$location.path("/selectUserForNewWeight");
+		}
+
+		this.setUser = function(user, force) {
+			if (!force && this.user && this.user.id == user.id)
+				return;
+
+			this.user = user;
+			$rootScope.$broadcast("UserChanged", this.user);
+		}
+
+		this.getSelectUsers = function() {
+			return this.users;
+		}
+
+		this.getUser = function() {
+			return this.user;
+		}
+	};
+
+	return new UserService();
+}]);
+
+app.controller('SelectUserForNewWeightController', function($scope, $http, $filter, $route, $location, $routeParams, UserService) {
+	var homeId = "Tommy";
+	$scope.showLoadAll = true;
+	$scope.showWeight = true;
+	$scope.users = UserService.getSelectUsers();
+	$scope.weight = $scope.lastWeight.kg;
+	$scope.date = new Date($scope.lastWeight.date).getTime();
+
+	$scope.setUser = function(user) {
+		console.log("setuser says, $scope.lastWeight = " , $scope.lastWeight, $scope.$parent.lastWeight);
+		var id = (user) ? user.id : -1;
+		$http({method: "POST", url: "/weight/" + homeId + "/register/" + $scope.date + "/" + $scope.weight + "/" + id}).then(function(json) {
+			if (json.data.status != 'ok')
+				alert(json.data.error);
+		});
+	}
+	$scope.loadAll = function() {
+		$http({method: "GET", url: "/getUsers/" + homeId}).then(function(json) {
+			$scope.users = json.data.users;
+		});
+		$scope.showAddUser = true;
+	}
+});
+
+app.controller('SwitchUserController', function($scope, $http, $filter, $route, $location, $routeParams, UserService) {
+	var homeId = "Tommy";
+	$scope.users = [];
+	$http({method: "GET", url: "/getUsers/" + homeId}).then(function(json) {
+		$scope.users = json.data.users;
+	});
+
+	$scope.setUser = function(user) {
+		UserService.setUser(user);
+	}
+});
+
+app.controller('MoveWeightController', function($scope, $http, $filter, $route, $location, $routeParams, UserService) {
+	var homeId = "Tommy";
+	var user = UserService.getUser();
+	$scope.users = [];
+	$scope.weights = [];
+	$http({method: "GET", url: "/getUsers/" + homeId}).then(function(json) {
+		$scope.users = json.data.users;
+	});
+
+	$http({method: "GET", url: "/getWeight/" + user.id + "/1/months"}).then(function(json) {
+		$scope.weights = [];
+		for(var i=0;i<json.data.dates.length;i++) {
+			$scope.weights.push( { date: json.data.dates[i], weight: json.data.weights[i] } );
+		}
+	});
+
+	$scope.selectWeight = function(weight) {
+		$scope.selected = weight;
+	}
+
+	$scope.selectUser = function(selectedUser) {
+		var url = "/moveWeight/" + homeId + "/" + user.id + "/" + $scope.selected.date + "/" + $scope.selected.weight + "/" + ((selectedUser) ? selectedUser.id : -1);
+		$http({method: "POST", url: url}).then(function(json) {
+			if (json.data.status != 'ok')
+				alert(json.data.error);
+		});
+	}
+});
+
+app.controller('MenuController', function($scope, $http, $filter, $route, $location, $routeParams) {
+	$scope.switchUser = function() {
+		$location.path("/switchUser");
+	}
+	$scope.moveWeight = function() {
+		$location.path("/moveWeight");
+	}
+	$scope.startPage = function() {
+		$location.path("/");
+	}
+});
+
+app.controller('NewUserController', function($scope, $http, $filter, $route, $location, $routeParams, UserService, $rootScope) {
+	var user = UserService.getUser();
+	$scope.newInfo = {
+			image: user.image,
+			name: user.name,
+			id: user.id,
+			length: user.length
+	};
+
+	$scope.saveNewInfo = function() {
+		$http({method: "POST", url: "/updateUser/info/" + user.id, data: $scope.newInfo}).then(function(json) {
+			console.log("Got response from server", json);
+		});
+	}
+});
+
+app.controller('MainController', function($scope, $http, $filter, $route, $location, $routeParams, $rootScope, UserService) {
 	var homeId = "Tommy";
 	var db = firebase.database();
+
+	console.log("routeParams: ", $routeParams);
+	var overrideUserOneTime = $routeParams.user;
 
 	$scope.lastWeight = undefined;
 	$scope.user = undefined;
@@ -30,16 +169,8 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 			}
 	};
 	$scope.today = {
+			data: []
 	};
-	$scope.newInfo = {
-			
-	};
-
-	$scope.saveNewInfo = function() {
-		$http({method: "POST", url: "/updateUser/info/" + $scope.user.id, data: $scope.newInfo}).then(function(json) {
-			console.log("Got response from server", json);
-		});
-	}
 
 	function compareOrIncreaseGroupedStats(obj, str, value, date)
 	{
@@ -75,15 +206,19 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 			obj.count++;
 			obj.lastDate = date;
 		}
-	
 	}
 
-	function setNewUser(user) {
+	$rootScope.$on('UserChanged', function(evt, user) {
 		if (user.newAutoCreate)
 			$location.path("/newUser");
 		else
 			$location.path("/newWeight");
 
+		if (overrideUserOneTime) {
+			console.log("Overrideuser onetime", overrideUserOneTime);
+			user = overrideUserOneTime;
+			overrideUserOneTime = null;
+		}
 		console.log("Setting new user", user);
 		$scope.user = user;
 		$scope.series[0] = user;
@@ -107,6 +242,7 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 			$scope.today = {
 					sum: 0,
 					count: 0,
+					data: []
 			};
 			var data = [ [], [], [] ];
 			var monthly = { data: [[], [], []], last: undefined, max: undefined, min: undefined, count: undefined, sum: undefined, lastDate: undefined };
@@ -128,17 +264,12 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 					else
 						$scope.today.min = Math.min(weight, $scope.today.min);
 					$scope.today.count++;
+
+					$scope.today.data.push({x: date, y: weight});
 				}
-				//$scope.labels.push(json.data.dates[i]);//$filter('date')(new Date(json.data.dates[i]), "yyyy-MM-dd hh:mm"));
-				
 				compareOrIncreaseGroupedStats(monthly, $filter('date')(date, "yyyy-MM"), json.data.weights[i], date);
 				compareOrIncreaseGroupedStats(weekly,  $filter('date')(date, "yyyy-WW"), json.data.weights[i], date);
 				compareOrIncreaseGroupedStats(daily,   $filter('date')(date, "yyyy-MM-dd"), json.data.weights[i], date);
-/*
-				data[0].push( { x: json.data.dates[i], y: json.data.weights[i] } );
-				data[1].push( { x: json.data.dates[i], y: json.data.weights[i] + 10 } );
-				data[2].push( { x: json.data.dates[i], y: json.data.weights[i] - 10} );
-				*/
 			}
 
 			compareOrIncreaseGroupedStats(monthly, undefined, json.data.weights[i], undefined);
@@ -169,7 +300,7 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 			};
 
 		});
-	}
+	});
 
 	function convertMapToArray(object, key)
 	{
@@ -182,15 +313,21 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 
 	function applyNewWeight(lastWeight) {
 		$scope.lastWeight = lastWeight;
-		console.log("Incoming new lastWeight: " + $scope.lastWeight);
+		console.log("Incoming new lastWeight: ", $scope.lastWeight);
 
 		convertMapToArray($scope.lastWeight, 'possibleUsers');
 
-		if ($scope.lastWeight.possibleUsers.length == 1)
-			setNewUser($scope.lastWeight.possibleUsers[0]);
+		if ($scope.lastWeight.possibleUsers.length == 1) {
+			console.log("Loading latest user");
+			$http({method: "GET", url: "/getUsers/byId/" + $scope.lastWeight.possibleUsers[0].id}).then(function(json) {
+				console.log("got response", json);
+				UserService.setUser(json.data.user, true);
+			});
+		} else {
+			UserService.selectUser($scope.lastWeight.possibleUsers);
+		}
 	}
 
-	console.log("firebase", firebase);
 	var lastWeight= firebase.database().ref('homes/' + homeId + '/lastWeight');
 	lastWeight.on('value', function(snapshot) {
 		console.log("Snapshot coming in", snapshot);
@@ -202,6 +339,35 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 	$scope.data = [ ];
 	$scope.onClick = function (points, evt) {
 		console.log(points, evt);
+	};
+
+	$scope.todayOptions = {
+			scales: {
+				xAxes: [
+					{
+						type: 'time',
+						display: true,
+						time: {
+							tooltipFormat: timeFormat,
+							displayFormats: {
+								millisecond: 'HH:mm:ss.SSS', // 11:20:01.123 AM,
+								second: 'HH:mm:ss', // 11:20:01 AM
+								minute: 'HH:mm', // 11:20:01 AM
+								hour: 'MM-dd HH', // Sept 4, 5PM
+								day: 'll', // Sep 4 2015
+								week: 'YYYY-MM-dd', // Week 46, or maybe "[W]WW - YYYY" ?
+								month: 'YYYY-MMM', // 2015-Sept
+								quarter: '[Q]Q - YYYY', // Q3
+								year: 'YYYY' // 2015
+							}
+						},
+						scaleLabel: {
+							display: true,
+							labelString: 'Date'
+						}
+					}
+					]
+			}
 	};
 
 	$scope.options2 = {

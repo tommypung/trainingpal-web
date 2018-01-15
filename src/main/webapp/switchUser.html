@@ -1,0 +1,17 @@
+<div ng-show="showWeight">
+	<h1>Ny vikt {{weight | number:2:2}}kg kom in, vem är du?</h1>
+</div>
+<div class="switchUser">
+	<div class="userList">
+		<div class="user" ng-repeat="user in users" ng-click="setUser(user)">
+			<img ng-src="{{user.image}}" /><span class="name">{{user.name}}</span>
+		</div>
+		<div ng-show="showAddUser" class="user" ng-click="setUser(null)">
+			<img src="newUser.png" /><span class="name">Skapa en ny
+				användare</span>
+		</div>
+	</div>
+	<br />
+	<div ng-show="showLoadAll" class="loadAll" ng-click="loadAll()">Finns
+		du inte med i listan? klicka här</div>
+</div>

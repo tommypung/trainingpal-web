@@ -1,0 +1,23 @@
+<div class="moveWeight">
+	<div class="weights">
+		<div class="row" ng-repeat="w in weights | orderBy:'-'"
+			ng-click="selectWeight(w)" ng-class="{selected : selected == w}">
+			<div class="date">{{w.date | date:'yyyy-MM-dd HH:mm'}}</div>
+			<div class="weight">{{w.weight | number:2:2}}kg</div>
+		</div>
+	</div>
+
+	<div class="userSelect" ng-show="selected">
+		<div class="userList">
+			<h1>Välj en användare att flytta till</h1>
+			<div class="user" ng-repeat="user in users"
+				ng-click="selectUser(user)">
+				<img ng-src="{{user.image}}" /><span class="name">{{user.name}}</span>
+			</div>
+			<div class="user" ng-click="selectUser(null)">
+				<img src="newUser.png" /><span class="name">Skapa en ny
+					användare</span>
+			</div>
+		</div>
+	</div>
+</div>

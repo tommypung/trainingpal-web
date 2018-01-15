@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -16,6 +17,7 @@ import java.util.logging.Logger;
 
 import org.json.JSONObject;
 import org.svearike.trainingpalweb.HttpConnection;
+import org.svearike.trainingpalweb.UserSerializer;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -38,12 +40,14 @@ public class SaveWeightTask implements DeferredTask
 	private String mHome;
 	private String mWeight;
 	private long mDate;
+	private Entity mOverrideUser;
 
-	public SaveWeightTask(String home, String weight, long date)
+	public SaveWeightTask(String home, String weight, long date, Entity overrideUser)
 	{
 		this.mHome = home;
 		this.mWeight = weight;
 		this.mDate = date;
+		this.mOverrideUser = overrideUser;
 
 		LOG.info("Creating task; " + this);
 	}
@@ -54,14 +58,14 @@ public class SaveWeightTask implements DeferredTask
 		List<Entity> possibleUsers = findUsers();
 		if (possibleUsers.isEmpty())
 		{
-			Entity user = createNewUser();
+			Entity user = Database.createNewUser(mHome, mWeight, mDate);
 			possibleUsers.add(user);
 			addStats(user, new Entity(Database.getStatsKey(user.getKey().getId(), mDate)), null);
 		}
 		else if (possibleUsers.size() == 1)
 		{
 			Entity user = possibleUsers.iterator().next();
-			updateUserAndStats(user);
+			user = updateUserAndStats(user);
 		}
 
 		try {
@@ -78,14 +82,10 @@ public class SaveWeightTask implements DeferredTask
 		Map<String, Object> map = new HashMap<>();
 		map.put("date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(mDate)));
 		map.put("kg", Float.parseFloat(mWeight));
-		Map<Long, Map<String, Object>> mapUsers = new HashMap<>();
+		Map<Long, JSONObject> mapUsers = new HashMap<>();
 		map.put("possibleUsers", mapUsers);
 		for(Entity e : possibleUsers) {
-			Map<String, Object> userMap = new HashMap<>();
-			userMap.put("id", e.getKey().getId());
-			userMap.put("name", e.getProperty("name"));
-			userMap.put("newAutoCreate", e.getProperty("newAutoCreate"));
-			mapUsers.put(e.getKey().getId(), userMap);
+			mapUsers.put(e.getKey().getId(), new UserSerializer().get(e));
 		}
 
 		JSONObject obj = new JSONObject(map);
@@ -93,13 +93,13 @@ public class SaveWeightTask implements DeferredTask
 		HttpConnection.connectAndGetString(new URL("https://trainingpal-web.firebaseio.com/homes/" + mHome + "/lastWeight.json"), "PUT", obj.toString(), TIMEOUT, TIMEOUT);
 	}
 
-	private void updateUserAndStats(Entity user)
+	private Entity updateUserAndStats(Entity user)
 	{
 		Transaction tx = datastore.beginTransaction(TransactionOptions.Builder.withXG(true));
 		try {
 			user = datastore.get(user.getKey());
-			if (user.hasProperty("lastWeightDate")
-					&& ((Long) user.getProperty("lastWeightDate")) < mDate)
+			if (!user.hasProperty("lastWeightDate")
+					|| (((Long) user.getProperty("lastWeightDate")) < mDate))
 			{
 				user.setProperty("lastWeight", Float.parseFloat(mWeight));
 				user.setProperty("lastWeightDate", mDate);
@@ -115,28 +115,16 @@ public class SaveWeightTask implements DeferredTask
 			addStats(user, stats, tx);
 
 			tx.commit();
+			return user;
 		} catch (EntityNotFoundException e) {
 			LOG.log(Level.SEVERE, "Could not find the User entity, wihch is really really weird", e);
 		} finally {
 			if (tx != null && tx.isActive())
 				tx.rollback();
 		}
+		return null;
 	}
 
-	private Entity createNewUser()
-	{
-		LOG.info("Creating a new User");
-		Entity user = new Entity("user");
-		user.setProperty("home", mHome);
-		user.setProperty("name", "Anonym");
-		user.setProperty("lastWeight", Double.parseDouble(mWeight));
-		user.setProperty("lastWeightDate", mDate);
-		user.setProperty("newAutoCreate", true);
-
-		datastore.put(user);
-		return user;
-	}
-	
 	private Entity addStats(Entity user, Entity stats, Transaction tx)
 	{
 		stats.setProperty("user", user.getKey().getId());
@@ -193,6 +181,9 @@ public class SaveWeightTask implements DeferredTask
 
 	private List<Entity> findUsers()
 	{
+		if (mOverrideUser != null)
+			return Arrays.asList(mOverrideUser);
+
 		LOG.info("Attempting to find user in db; " + this);
 		Query query = new Query("user");
 		query.setFilter(new Query.FilterPredicate("home", FilterOperator.EQUAL, mHome));
