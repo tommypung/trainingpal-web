@@ -102,3 +102,50 @@
     display: inline-block;
     vertical-align:top;
 }
+
+table, td, tr {
+  text-align: left;
+}
+
+div.smallDiffBar {
+  display: inline-block;
+  border: 1px solid gray;
+  height: 1.2em;
+  width: 60px;
+}
+
+div.mediumDiffBar {
+  display: inline-block;
+  border: 1px solid gray;
+  height: 1.2em;
+  width: 200px;
+}
+
+div.gain {
+  background-color: red;
+}
+div.loss {
+  background-color: blue;
+}
+
+div.smallDiffBar div, div.mediumDiffBar div {
+  display: inline-block;
+  height: 1.2em;
+  text-align: center;
+  color: yellow;
+}
+
+div.bar {
+  display: inline-block;
+  border: 1px solid grey;
+  height: 1.2em;
+  width: 200px;
+}
+
+div.bar div {
+  display: inline-block;
+  background: blue;
+  height: 1.2em;
+  text-align: center;
+  color: yellow;
+}

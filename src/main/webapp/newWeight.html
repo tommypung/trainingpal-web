@@ -11,10 +11,78 @@
 	<h1>Välkommen {{user.name}}</h1>
 </div>
 <div class="comparedToLastDay">
-	<h3>Jämfört med tidigare dag</h3>
-	<span class="title">Max:</span> <span class="value">{{diff.lastDay.max}}</span>
-	<span class="title">Avg:</span> <span class="value">{{diff.lastDay.avg}}</span>
-	<span class="title">Min:</span> <span class="value">{{diff.lastDay.min}}</span>
+	<h3>Jämfört med senaste 2 veckorna</h3>
+	 <table>
+  <tr>
+    <td></td>
+    <td>{{c.min|number:2:2}}kg</td>
+  </tr>
+  <tr>
+    <td>Extremes</td>
+    <td colspan="2"><div class="bar"><div style="width:{{c.extremeDistance * 100 / c.largestDiff | number:0}}%">{{c.extremeDistance|number:2:2}}kg</div></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td colspan="2" style="text-align:right">{{c.max|number:2:2}}kg<div style="float:right;width:{{100 - c.extremeDistance * 100 / c.largestDiff | number:0}}%">&nbsp;</div></td>
+  </tr>
+
+  <tr>
+    <td></td>
+    <td>{{c.todayMin|number:2:2}}kg</td>
+  </tr>
+  <tr>
+    <td>Today</td>
+    <td colspan="2"><div class="bar"><div style="width:{{c.todayExtremeDistance * 100 / c.largestDiff | number:0}}%">{{c.todayExtremeDistance|number:2:2}}kg</div></div></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td colspan="2" style="text-align:right"><div style="float:right">
+    
+    {{c.todayMax|number:2:2}}kg</div><div style="float:right;width:{{100 - c.todayExtremeDistance * 100 / c.largestDiff | number:0}}%">&nbsp;</div></td>
+  </tr>
+
+  <tr>
+    <td></td>
+    <td>{{c.minDiff|number:2:2}}kg</td>
+  </tr>
+
+   <tr>
+     <td>Diffs</td>
+    <td><div class="smallDiffBar">
+        <div class="loss" ng-if="c.minDiff < 0" style="margin-left: {{50-c.minDiffAbs * 100 / c.smallDiff / 2| number:0}}%;width:{{c.minDiffAbs * 100 / c.smallDiff / 2 | number:0}}%">
+      </div>
+      <div class="gain" ng-if="c.minDiff >= 0" style="margin-left: 50%;width:{{c.minDiffAbs * 100 / c.smallDiff / 2 | number:0}}%">
+      </div>
+      </div>
+      </td>
+      
+     <td><div class="smallDiffBar">
+        <div class="loss" ng-if="c.maxDiff < 0" style="margin-left: {{50-c.maxDiffAbs * 100 / c.smallDiff / 2 | number:0}}%;width:{{c.maxDiffAbs * 100 / c.smallDiff / 2 | number:0}}%">
+      </div>
+      <div class="gain" ng-if="c.maxDiff >= 0" style="margin-left: 50%;width:{{c.maxDiffAbs * 100 / c.smallDiff / 2 | number:0}}%">
+      </div>
+      </td>
+   </tr>
+   <tr>
+     <td></td>
+     <td></td>
+     <td>{{c.maxDiff|number:2:2}}kg</td>
+   </tr>
+   <tr>
+     <td></td>
+     <td>{{c.percentageDiff|number:2:2}}kg</td>
+   </tr>
+   <tr>
+     <td>Happy Diff</td>
+     <td colspan="2"><div class="mediumDiffBar">
+        <div class="loss" ng-if="c.percentageDiff < 0" style="margin-left: {{50-c.percentageDiffAbs * 100 / c.smallDiff / 2 | number:0}}%;width:{{c.percentageDiffAbs * 100 / c.smallDiff / 2 | number:0}}%">
+      </div>
+      <div class="gain" ng-if="c.percentageDiff >= 0" style="margin-left: 50%;width:{{c.percentageDiffAbs * 100 / c.smallDiff / 2 | number:0}}%">
+      </div>
+      </td>
+
+   </tr>
+  </table>
 </div>
 
 <div class="todaysScore">

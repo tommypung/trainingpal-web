@@ -1,3 +1,75 @@
+function Collector(now)
+{
+	this.now = now;
+	resetTime(this.now);
+	this.buckets = {};
+
+	function resetTime(d) {
+		d.setHours(0);
+		d.setMinutes(0);
+		d.setSeconds(0);
+		d.setMilliseconds(0);
+	}
+
+	function daysAgo(now, date) {
+		var d = new Date(date.getTime());
+		resetTime(d);
+		return Math.floor((now.getTime() - d.getTime()) / (24 * 60 * 60 * 1000));
+	}
+
+	function spanCollect(name, low, high, date, value) {
+		var distance = daysAgo(this.now, date);
+		if (distance > high || distance < low) {
+			return; // not within span
+		}
+
+		var o = this.buckets[name];
+		if (!o)
+			this.buckets[name] = {max: value.max, min: value.min};
+		else {
+			o.max = Math.max(o.max, value.max);
+			o.min = Math.min(o.min, value.min);
+		}
+	}
+
+	this.collect = function(date, value) {
+		spanCollect.apply(this, ['all', 7, 30000, date, value]);
+		spanCollect.apply(this, ['twoWeeks', 7, 21, date, value]);
+		spanCollect.apply(this, ['today', 0, 0, date, value]);
+	}
+
+	this.compare = function(name, value) {
+		var o = this.buckets[name];
+		var today = this.buckets['today'];
+		console.log("buckets: ", name, o, 'today', today);
+		if (!o || !today) {
+			return { };
+		}
+
+		console.log("todayPercentage = " + ((value - today.min) / (today.max - today.min)), value, today.max, today.min);
+		var todayPercentage = Math.max(0, Math.min((value - today.min) / (today.max - today.min), 1.0));
+
+		var r = {
+				max: o.max,
+				min: o.min,
+				extremeDistance: o.max - o.min,
+				maxDiff: today.max - o.max,
+				minDiff: today.min - o.min,
+				todayPercentage: todayPercentage,
+				todayMin: today.min,
+				todayMax: today.max,
+				todayExtremeDistance: today.max - today.min,
+				percentageDiff: value - (todayPercentage * (o.max - o.min) + o.min),
+		};
+		r.minDiffAbs = Math.abs(r.minDiff);
+		r.maxDiffAbs = Math.abs(r.maxDiff);
+		r.percentageDiffAbs = Math.abs(r.percentageDiff);
+		r.largestDiff = Math.max(r.extremeDistance, r.maxDiffAbs, r.minDiffAbs, r.percentageDiffAbs, 3);
+		r.smallDiff = Math.max(r.maxDiffAbs, r.minDiffAbs, 2);
+		return r;
+	}
+}
+
 var app = angular.module('Trainingpal', ["chart.js", 'ngRoute']);
 
 app.config(['$routeProvider', '$locationProvider',
@@ -244,6 +316,7 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 					count: 0,
 					data: []
 			};
+			var collector = new Collector(new Date(json.data.dates[json.data.dates.length - 1]));
 			var data = [ [], [], [] ];
 			var monthly = { data: [[], [], []], last: undefined, max: undefined, min: undefined, count: undefined, sum: undefined, lastDate: undefined };
 			var weekly =  { data: [[], [], []], last: undefined, max: undefined, min: undefined, count: undefined, sum: undefined, lastDate: undefined };
@@ -270,6 +343,7 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 				compareOrIncreaseGroupedStats(monthly, $filter('date')(date, "yyyy-MM"), json.data.weights[i], date);
 				compareOrIncreaseGroupedStats(weekly,  $filter('date')(date, "yyyy-WW"), json.data.weights[i], date);
 				compareOrIncreaseGroupedStats(daily,   $filter('date')(date, "yyyy-MM-dd"), json.data.weights[i], date);
+				collector.collect(date, {min: json.data.weights[i], max: json.data.weights[i]});
 			}
 
 			compareOrIncreaseGroupedStats(monthly, undefined, json.data.weights[i], undefined);
@@ -280,6 +354,7 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 			$scope.data2 = daily.data;
 			$scope.data = daily.data;
 			$scope.today.avg = $scope.today.sum / $scope.today.count;
+			$scope.c = collector.compare('twoWeeks', json.data.weights[json.data.weights.length - 1]);
 
 			$scope.data = {
 					datasets: [{
