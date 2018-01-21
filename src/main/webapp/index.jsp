@@ -20,6 +20,7 @@
 </script>
 <script type="text/javascript" src="angular.js"></script>
 <script type="text/javascript" src="angular-route.js"></script>
+<script type="text/javascript" src="graph.js"></script>
 <script src="Chart.bundle.js"></script>
 <script src="angular-chart.js"></script>
 <script type="text/javascript" src="script.js?dsf"></script>

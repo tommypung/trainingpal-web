@@ -137,7 +137,6 @@ div.smallDiffBar div, div.mediumDiffBar div {
 
 div.bar {
   display: inline-block;
-  border: 1px solid grey;
   height: 1.2em;
   width: 200px;
 }
@@ -148,4 +147,35 @@ div.bar div {
   height: 1.2em;
   text-align: center;
   color: yellow;
+}
+
+div.graph {
+	float: left;
+	clear: both;
+}
+
+div.graph div.header {
+	width: 70px;
+	overflow: hidden;
+	display: inline-block;
+	height: 1.2em;
+	float: left;
+	clear: left;
+	margin-top: 1px;
+}
+
+div.graph div.bar {
+	float: left;
+}
+
+div.graph div.bar span {
+	color: white;
+	font-size: 0.6em;
+	margin-top: 0.5em;
+}
+div.graph div.bar span.min {
+	float: left;
+}
+div.graph div.bar span.max {
+	float: right;
 }
