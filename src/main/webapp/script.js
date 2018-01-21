@@ -159,6 +159,14 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 	console.log("routeParams: ", $routeParams);
 	var overrideUserOneTime = $routeParams.user;
 
+	$scope.buckets = [
+		{name: '4+', header: '4-12 veckor'},
+		{name: '3-4', header: '3-4 veckor'},
+		{name: '2-3', header: '2-3 veckor'},
+		{name: '1-2', header: '1-2 veckor'},
+		{name: '0-1', header: 'senaste 6 dagarna'},
+		{name: 'today', header: 'Idag'},
+		];
 	$scope.lastWeight = undefined;
 	$scope.user = undefined;
 	$scope.diff = {
@@ -284,14 +292,6 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 			$scope.today.avg = $scope.today.sum / $scope.today.count;
 			$scope.c = collector.compare('twoWeeks', json.data.weights[json.data.weights.length - 1]);
 			$scope.collector = collector;
-			$scope.buckets = [
-				{name: '4+', header: '4-12 veckor'},
-				{name: '3-4', header: '3-4 veckor'},
-				{name: '2-3', header: '2-3 veckor'},
-				{name: '1-2', header: '1-2 veckor'},
-				{name: '0-1', header: 'senaste 6 dagarna'},
-				{name: 'today', header: 'Idag'},
-				];
 
 			$scope.data = {
 					datasets: [{
