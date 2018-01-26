@@ -21,6 +21,7 @@ public class UserInfoServlet extends HttpServlet
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
+		resp.addHeader("Access-Control-Allow-Origin", "*");
 		URLPathParameters params = new URLPathParameters("/info/${user}", req.getPathInfo());
 		if (!params.isValid())
 			throw new ServletException("Invalid parameters: " + params.getError());

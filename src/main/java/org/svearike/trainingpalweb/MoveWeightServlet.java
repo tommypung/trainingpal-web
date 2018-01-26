@@ -20,6 +20,7 @@ public class MoveWeightServlet extends HttpServlet
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
 		try {
+			resp.addHeader("Access-Control-Allow-Origin", "*");
 			resp.setContentType("application/json");
 
 			handle(req, resp);

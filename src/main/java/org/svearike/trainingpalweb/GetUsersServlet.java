@@ -20,6 +20,7 @@ public class GetUsersServlet extends HttpServlet
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
 		try {
+			resp.addHeader("Access-Control-Allow-Origin", "*");
 			handle(req, resp);
 		} catch(Exception e) {
 			throw new ServletException(e);

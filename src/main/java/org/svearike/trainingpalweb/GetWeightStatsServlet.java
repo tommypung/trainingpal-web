@@ -72,6 +72,7 @@ public class GetWeightStatsServlet extends HttpServlet
 		root.put("weights", weightArr);
 
 		resp.setContentType("application/json");
+		resp.addHeader("Access-Control-Allow-Origin", "*");
 		resp.getWriter().print(root.toString());
 	}
 }
