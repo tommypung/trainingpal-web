@@ -90,7 +90,7 @@ function Collector(now)
 		}
 		return [min, max];
 	}
-	
+
 	this.getBucket = function(name) {
 		return this.buckets[name];
 	}
@@ -99,24 +99,34 @@ function Collector(now)
 angular.module('graph', []).directive('myGraph', function() {
 	return {
 		scope: {
-			collector: '&collector',
-			buckets: '&buckets'
+			collector: '=collector',
+			buckets: '=buckets'
 		},
 		templateUrl: "graph.html",
 		link: function($scope, element, attrs) {
-			$scope.buckets = $scope.buckets();
-			console.log(arguments);
-			$scope.collector = $scope.collector();
-			console.log("collector = ", $scope.collector);
-			console.log("collector = ", attrs.collector);
-			var bucketNames = [];
-			for(var i=0;i<$scope.buckets.length;i++)
-				bucketNames.push($scope.buckets[i].name);
-			var range = $scope.collector.getGlobalRange(bucketNames);
-			$scope.globalMin = range[0];
-			$scope.globalMax = range[1];
-			$scope.barWidth = 300;
-			$scope.kgToPixelFactor = 300 / ($scope.globalMax - $scope.globalMin);
+			function build() {
+				console.log("Building <my-graph>");
+				//$scope.buckets = $scope.buckets();
+				console.log(arguments);
+//				$scope.collector = $scope.collector();
+				console.log("collector = ", $scope.collector);
+				console.log("collector = ", attrs.collector);
+				var bucketNames = [];
+				for(var i=0;i<$scope.buckets.length;i++)
+					bucketNames.push($scope.buckets[i].name);
+				try {
+					var range = $scope.collector.getGlobalRange(bucketNames);
+					$scope.globalMin = range[0];
+					$scope.globalMax = range[1];
+					$scope.barWidth = 300;
+					$scope.kgToPixelFactor = 300 / ($scope.globalMax - $scope.globalMin);
+				} catch(error) {
+
+				}
+				$scope.$broadcast('change');
+			}
+//			$scope.$watch(attrs.buckets, build);
+			$scope.$watch(attrs.collector, build);
 		},
 		controller: function($scope) {
 			this.getBucket = function(name) {
@@ -148,28 +158,30 @@ angular.module('graph', []).directive('myGraph', function() {
 	return {
 		require: '^myGraph',
 		scope: {
-			bucketName: '@bucketName',
-			width: '@width',
+			bucketName: '=bucketName',
+			width: '=width',
 		},
 		templateUrl: "graph-bar.html",
 		link: function($scope, element, attrs, myGraph) {
-			var bucket = myGraph.getBucket($scope.bucketName);
-			console.log("bucketName = " ,$scope.bucketName, bucket);
-			console.log("width = ", $scope.width);
-			console.log(arguments);
-			var range = myGraph.getGlobalRange();
-			$scope.globalMin = range[0];
-			$scope.globalMax = range[1];
-			$scope.min = bucket.min;
-			$scope.max = bucket.max;
-			$scope.kgToPixelFactor = myGraph.getKgToPixelFactor();
-			console.log("equation: ", $scope.min, $scope.globalMin, $scope.kgToPixelFactor);
-			var colorCmp = myGraph.compareToPrevious($scope.bucketName, bucket);
-			$scope.lowerColor = (colorCmp[0] <= 0) ? 'blue' : 'red';
-			$scope.higherColor = (colorCmp[1] <= 0) ? 'blue' : 'red';
-			console.log("colorcmp:", colorCmp);
-			$scope.start = ($scope.min - $scope.globalMin) * parseFloat($scope.kgToPixelFactor);
-			$scope.length = ($scope.max - $scope.min) * parseFloat($scope.kgToPixelFactor);
+			function build() {
+				console.log("Building <my-graph-bar>");
+				var bucket = myGraph.getBucket($scope.bucketName);
+				var range = myGraph.getGlobalRange();
+				$scope.globalMin = range[0];
+				$scope.globalMax = range[1];
+				$scope.min = bucket.min;
+				$scope.max = bucket.max;
+				$scope.kgToPixelFactor = myGraph.getKgToPixelFactor();
+				//console.log("equation: ", $scope.min, $scope.globalMin, $scope.kgToPixelFactor);
+				var colorCmp = myGraph.compareToPrevious($scope.bucketName, bucket);
+				$scope.lowerColor = (colorCmp[0] <= 0) ? 'blue' : 'red';
+				$scope.higherColor = (colorCmp[1] <= 0) ? 'blue' : 'red';
+				$scope.start = ($scope.min - $scope.globalMin) * parseFloat($scope.kgToPixelFactor);
+				$scope.length = ($scope.max - $scope.min) * parseFloat($scope.kgToPixelFactor);
+			}
+			$scope.$watch(attrs.bucketName, build);
+			$scope.$watch(attrs.width, build);
+			$scope.$on('change', build);
 		}
 	};
 });

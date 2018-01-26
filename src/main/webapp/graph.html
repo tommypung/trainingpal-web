@@ -1,7 +1,7 @@
 <div class="graph">
 	<div ng-repeat="bucket in buckets track by $index">
 		<div class="header">{{bucket.header}}</div>
-			<my-graph-bar width="{{barWidth}}" bucket-name="{{bucket.name}}">
+			<my-graph-bar width="barWidth" bucket-name="bucket.name">
 			</my-graph-bar>
 	</div>
 </div>

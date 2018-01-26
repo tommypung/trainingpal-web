@@ -10,7 +10,7 @@
 	</div>
 	<h1>Välkommen {{user.name}}</h1>
 </div>
-<my-graph collector="collector" buckets="buckets">
+<my-graph ng-if="collector" collector="collector" buckets="buckets">
 </my-graph>
 <div style="clear:both;"></div>
 <div class="comparedToLastDay">
