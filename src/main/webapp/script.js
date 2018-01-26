@@ -1,5 +1,7 @@
 var app = angular.module('Trainingpal', ["chart.js", 'ngRoute', 'graph']);
 
+var basePath = "http://trainingpal-web.appspot.com";
+
 app.config(['$routeProvider', '$locationProvider',
 	function($routeProvider, $locationProvider) {
 	$routeProvider
@@ -70,13 +72,13 @@ app.controller('SelectUserForNewWeightController', function($scope, $http, $filt
 	$scope.setUser = function(user) {
 		console.log("setuser says, $scope.lastWeight = " , $scope.lastWeight, $scope.$parent.lastWeight);
 		var id = (user) ? user.id : -1;
-		$http({method: "POST", url: "/weight/" + homeId + "/register/" + $scope.date + "/" + $scope.weight + "/" + id}).then(function(json) {
+		$http({method: "POST", url: basePath + "/weight/" + homeId + "/register/" + $scope.date + "/" + $scope.weight + "/" + id}).then(function(json) {
 			if (json.data.status != 'ok')
 				alert(json.data.error);
 		});
 	}
 	$scope.loadAll = function() {
-		$http({method: "GET", url: "/getUsers/" + homeId}).then(function(json) {
+		$http({method: "GET", url: basePath + "/getUsers/" + homeId}).then(function(json) {
 			$scope.users = json.data.users;
 		});
 		$scope.showAddUser = true;
@@ -86,7 +88,7 @@ app.controller('SelectUserForNewWeightController', function($scope, $http, $filt
 app.controller('SwitchUserController', function($scope, $http, $filter, $route, $location, $routeParams, UserService) {
 	var homeId = "Tommy";
 	$scope.users = [];
-	$http({method: "GET", url: "/getUsers/" + homeId}).then(function(json) {
+	$http({method: "GET", url: basePath + "/getUsers/" + homeId}).then(function(json) {
 		$scope.users = json.data.users;
 	});
 
@@ -100,11 +102,11 @@ app.controller('MoveWeightController', function($scope, $http, $filter, $route, 
 	var user = UserService.getUser();
 	$scope.users = [];
 	$scope.weights = [];
-	$http({method: "GET", url: "/getUsers/" + homeId}).then(function(json) {
+	$http({method: "GET", url: basePath + "/getUsers/" + homeId}).then(function(json) {
 		$scope.users = json.data.users;
 	});
 
-	$http({method: "GET", url: "/getWeight/" + user.id + "/1/months"}).then(function(json) {
+	$http({method: "GET", url: basePath + "/getWeight/" + user.id + "/1/months"}).then(function(json) {
 		$scope.weights = [];
 		for(var i=0;i<json.data.dates.length;i++) {
 			$scope.weights.push( { date: json.data.dates[i], weight: json.data.weights[i] } );
@@ -116,7 +118,7 @@ app.controller('MoveWeightController', function($scope, $http, $filter, $route, 
 	}
 
 	$scope.selectUser = function(selectedUser) {
-		var url = "/moveWeight/" + homeId + "/" + user.id + "/" + $scope.selected.date + "/" + $scope.selected.weight + "/" + ((selectedUser) ? selectedUser.id : -1);
+		var url = basePath + "/moveWeight/" + homeId + "/" + user.id + "/" + $scope.selected.date + "/" + $scope.selected.weight + "/" + ((selectedUser) ? selectedUser.id : -1);
 		$http({method: "POST", url: url}).then(function(json) {
 			if (json.data.status != 'ok')
 				alert(json.data.error);
@@ -146,7 +148,7 @@ app.controller('NewUserController', function($scope, $http, $filter, $route, $lo
 	};
 
 	$scope.saveNewInfo = function() {
-		$http({method: "POST", url: "/updateUser/info/" + user.id, data: $scope.newInfo}).then(function(json) {
+		$http({method: "POST", url: basePath + "/updateUser/info/" + user.id, data: $scope.newInfo}).then(function(json) {
 			console.log("Got response from server", json);
 		});
 	}
@@ -232,7 +234,7 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 		$scope.series[0] = user;
 		$scope.data = { };
 
-		$http({method: "GET", url: "/getWeight/" + user.id + "/3/months"}).then(function(json) {
+		$http({method: "GET", url: basePath + "/getWeight/" + user.id + "/3/months"}).then(function(json) {
 			console.log("Got response from server", json);
 			//$scope.data = json.data.weights;
 			$scope.labels = [];
@@ -331,7 +333,7 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 
 		if ($scope.lastWeight.possibleUsers.length == 1) {
 			console.log("Loading latest user");
-			$http({method: "GET", url: "/getUsers/byId/" + $scope.lastWeight.possibleUsers[0].id}).then(function(json) {
+			$http({method: "GET", url: basePath + "/getUsers/byId/" + $scope.lastWeight.possibleUsers[0].id}).then(function(json) {
 				console.log("got response", json);
 				UserService.setUser(json.data.user, true);
 			});
