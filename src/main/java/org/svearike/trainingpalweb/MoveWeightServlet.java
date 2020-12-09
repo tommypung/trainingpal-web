@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONObject;
-import org.svearike.trainingpalweb.tasks.Database;
+import org.svearike.trainingpalweb.tasks.Datastore;
 import org.svearike.trainingpalweb.tasks.SaveWeightTask;
 
 import com.google.appengine.api.datastore.Entity;
@@ -16,6 +16,8 @@ import com.google.appengine.api.datastore.Entity;
 @SuppressWarnings("serial")
 public class MoveWeightServlet extends HttpServlet
 {
+	private Database database = new Cache(new Datastore());
+
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
@@ -46,15 +48,15 @@ public class MoveWeightServlet extends HttpServlet
 
 		if (toUser == -1)
 		{
-			Entity user = Database.createNewUser(home, weight, date);
+			Entity user = database.createNewUser(home, weight, date);
 			new SaveWeightTask(home, weight, date, user).run();
-			Database.removeWeight(fromUser, date);
+			database.removeWeight(fromUser, date);
 		}
 		else
 		{
-			Entity user = Database.getUser(toUser);
+			Entity user = database.getUser(toUser);
 			new SaveWeightTask(home, weight, date, user).run();
-			Database.removeWeight(fromUser, date);
+			database.removeWeight(fromUser, date);
 		}
 
 		JSONObject root = new JSONObject();

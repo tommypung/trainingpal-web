@@ -9,13 +9,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONObject;
-import org.svearike.trainingpalweb.tasks.Database;
+import org.svearike.trainingpalweb.tasks.Datastore;
 
 import com.google.appengine.api.datastore.Entity;
 
 @SuppressWarnings("serial")
 public class GetUsersServlet extends HttpServlet
 {
+	private Database database = new Cache(new Datastore());
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
@@ -39,11 +41,11 @@ public class GetUsersServlet extends HttpServlet
 		JSONObject root = new JSONObject();
 		if (param.isValid())
 		{
-			List<Entity> users = Database.getUsers(param.getString("home"));
+			List<Entity> users = database.getUsers(param.getString("home"));
 			root.put("users", new UserSerializer().get(users));
 		}
 		else if (p1.isValid())
-			root.put("user", new UserSerializer().get(Database.getUser(p1.getLong("user"))));
+			root.put("user", new UserSerializer().get(database.getUser(p1.getLong("user"))));
 
 		resp.getWriter().write(root.toString());
 	}

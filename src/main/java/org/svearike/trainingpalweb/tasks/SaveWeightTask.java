@@ -2,11 +2,9 @@ package org.svearike.trainingpalweb.tasks;
 
 import java.io.IOException;
 import java.net.URL;
+import java.security.InvalidParameterException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -16,23 +14,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.json.JSONObject;
+import org.svearike.trainingpalweb.Cache;
+import org.svearike.trainingpalweb.Database;
 import org.svearike.trainingpalweb.HttpConnection;
 import org.svearike.trainingpalweb.UserSerializer;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.datastore.TransactionOptions;
 import com.google.appengine.api.taskqueue.DeferredTask;
-import com.google.gson.internal.Pair;
 
 @SuppressWarnings("serial")
 public class SaveWeightTask implements DeferredTask
 {
+	private static final Database database = new Cache(new Datastore());
 	private static final Logger LOG = Logger.getLogger(SaveWeightTask.class.getName());
 	private static final float ALLOWED_PERCENTAGE_DELTA = 0.03f;
 	private static final int TIMEOUT = 30000;
@@ -58,9 +57,9 @@ public class SaveWeightTask implements DeferredTask
 		List<Entity> possibleUsers = findUsers();
 		if (possibleUsers.isEmpty())
 		{
-			Entity user = Database.createNewUser(mHome, mWeight, mDate);
+			Entity user = database.createNewUser(mHome, mWeight, mDate);
 			possibleUsers.add(user);
-			addStats(user, new Entity(Database.getStatsKey(user.getKey().getId(), mDate)), null);
+			database.addStats(user, mDate, Double.parseDouble(mWeight), null);
 		}
 		else if (possibleUsers.size() == 1)
 		{
@@ -97,86 +96,26 @@ public class SaveWeightTask implements DeferredTask
 	{
 		Transaction tx = datastore.beginTransaction(TransactionOptions.Builder.withXG(true));
 		try {
-			user = datastore.get(user.getKey());
-			if (!user.hasProperty("lastWeightDate")
-					|| (((Long) user.getProperty("lastWeightDate")) < mDate))
-			{
-				user.setProperty("lastWeight", Float.parseFloat(mWeight));
-				user.setProperty("lastWeightDate", mDate);
-			}
-			datastore.put(tx, user);
-
-			Entity stats = null;
-			try {
-				stats = datastore.get(tx, Database.getStatsKey(user.getKey().getId(), mDate));
-			} catch(EntityNotFoundException e) {
-				stats = new Entity(Database.getStatsKey(user.getKey().getId(), mDate));
-			}
-			addStats(user, stats, tx);
+			user = database.updateUser(user.getKey().getId(), new Database.OnLoad(){
+				@Override
+				public boolean loadedInATransaction(Entity user) throws InvalidParameterException {
+					if (!user.hasProperty("lastWeightDate")
+							|| (((Long) user.getProperty("lastWeightDate")) < mDate))
+					{
+						user.setProperty("lastWeight", Float.parseFloat(mWeight));
+						user.setProperty("lastWeightDate", mDate);
+					}
+					return false;
+				}
+			});
+			database.addStats(user, mDate, Double.parseDouble(mWeight), tx);
 
 			tx.commit();
 			return user;
-		} catch (EntityNotFoundException e) {
-			LOG.log(Level.SEVERE, "Could not find the User entity, wihch is really really weird", e);
 		} finally {
 			if (tx != null && tx.isActive())
 				tx.rollback();
 		}
-		return null;
-	}
-
-	private Entity addStats(Entity user, Entity stats, Transaction tx)
-	{
-		stats.setProperty("user", user.getKey().getId());
-		if (!stats.hasProperty("firstDate"))
-			stats.setProperty("firstDate", mDate);
-
-		stats.setProperty("lastDate", mDate);
-		stats.setProperty("home", mHome);
-
-		@SuppressWarnings("unchecked")
-		List<Double> weight = (List<Double>) stats.getProperty("weight");
-		if (weight == null)
-			weight = new LinkedList<>();
-
-		@SuppressWarnings("unchecked")
-		List<Long> date = (List<Long>) stats.getProperty("date");
-		if (date == null)
-			date = new LinkedList<>();
-
-		weight.add(Double.parseDouble(mWeight));
-		date.add(mDate);
-
-		Pair<List<Double>, List<Long>> sorted = sortWeightDate(weight, date);
-
-		weight = sorted.first;
-		date = sorted.second;
-		stats.setProperty("weight", weight);
-		stats.setProperty("date", date);
-
-		datastore.put(tx, stats);
-		return stats;
-	}
-
-	private Pair<List<Double>, List<Long>> sortWeightDate(List<Double> weight, List<Long> date)
-	{
-		List<Pair<Double, Long>> list = new LinkedList<>();
-		for(int i=0;i<weight.size();i++)
-			list.add(new Pair<Double, Long>(weight.get(i), date.get(i)));
-		Collections.sort(list, new Comparator<Pair<Double, Long>>() {
-			@Override public int compare(Pair<Double, Long> o1, Pair<Double, Long> o2) {
-				return o1.second.compareTo(o2.second);
-			}
-		});
-
-		List<Double> dList = new ArrayList<>(list.size());
-		List<Long> lList = new ArrayList<>(list.size());
-		for(Pair<Double, Long> p : list) {
-			dList.add(p.first);
-			lList.add(p.second);
-		}
-
-		return new Pair<>(dList, lList);
 	}
 
 	private List<Entity> findUsers()

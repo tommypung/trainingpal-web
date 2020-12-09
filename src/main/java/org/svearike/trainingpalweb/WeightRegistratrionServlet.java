@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.svearike.trainingpalweb.tasks.Database;
+import org.svearike.trainingpalweb.tasks.Datastore;
 import org.svearike.trainingpalweb.tasks.SaveWeightTask;
 
 import com.google.appengine.api.datastore.Entity;
@@ -18,6 +18,8 @@ import com.google.appengine.api.taskqueue.TaskOptions;
 @SuppressWarnings("serial")
 public class WeightRegistratrionServlet extends HttpServlet
 {
+	private Database database = new Cache(new Datastore());
+
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
@@ -43,9 +45,9 @@ public class WeightRegistratrionServlet extends HttpServlet
 				long id = withDateUser.getLong("user");
 				Entity user = null;
 				if (id != -1)
-					user = Database.getUser(id);
+					user = database.getUser(id);
 				else
-					user = Database.createNewUser(withDateUser.getString("home"), withDateUser.getString("weight"), withDateUser.getLong("timestamp"));
+					user = database.createNewUser(withDateUser.getString("home"), withDateUser.getString("weight"), withDateUser.getLong("timestamp"));
 
 				wt = new SaveWeightTask(withDateUser.getString("home"), withDateUser.getString("weight"), withDateUser.getLong("timestamp"), user);
 			}

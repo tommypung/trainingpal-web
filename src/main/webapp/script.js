@@ -162,7 +162,14 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 	var overrideUserOneTime = $routeParams.user;
 
 	$scope.buckets = [
-		{name: '4+', header: '4-12 veckor'},
+		{name: '150+', header: '72+ veckor'},
+		{name: '100-150', header: '100-150 veckor'},
+		{name: '72-100', header: '72-100 veckor'},
+		{name: '60-72', header: '60-72 veckor'},
+		{name: '48-60', header: '48-60 veckor'},
+		{name: '24-48', header: '24-48 veckor'},
+		{name: '12-24', header: '12-24 veckor'},
+		{name: '4-12', header: '4-12 veckor'},
 		{name: '3-4', header: '3-4 veckor'},
 		{name: '2-3', header: '2-3 veckor'},
 		{name: '1-2', header: '1-2 veckor'},
@@ -234,7 +241,7 @@ app.controller('MainController', function($scope, $http, $filter, $route, $locat
 		$scope.series[0] = user;
 		$scope.data = { };
 
-		$http({method: "GET", url: basePath + "/getWeight/" + user.id + "/3/months"}).then(function(json) {
+		$http({method: "GET", url: basePath + "/getWeight/" + user.id + "/80/months"}).then(function(json) {
 			console.log("Got response from server", json);
 			//$scope.data = json.data.weights;
 			$scope.labels = [];

@@ -24,6 +24,7 @@
 <script src="Chart.bundle.js"></script>
 <script src="angular-chart.js"></script>
 <script type="text/javascript" src="script.js?dsf"></script>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
 <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body ng-app="Trainingpal">

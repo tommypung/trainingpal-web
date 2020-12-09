@@ -10,14 +10,16 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
-import org.svearike.trainingpalweb.tasks.Database;
-import org.svearike.trainingpalweb.tasks.Database.OnLoad;
+import org.svearike.trainingpalweb.Database.OnLoad;
+import org.svearike.trainingpalweb.tasks.Datastore;
 
 import com.google.appengine.api.datastore.Entity;
 
 @SuppressWarnings("serial")
 public class UserInfoServlet extends HttpServlet
 {
+	private Database database = new Cache(new Datastore());
+
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
@@ -32,7 +34,7 @@ public class UserInfoServlet extends HttpServlet
 		final long length = Long.parseLong(obj.getString("length"));
 		final String image = obj.getString("image");
 
-		Database.updateUser(params.getLong("user"), new OnLoad() {
+		database.updateUser(params.getLong("user"), new OnLoad() {
 			@Override
 			public boolean loadedInATransaction(Entity e) throws InvalidParameterException {
 				e.setProperty("newAutoCreate", false);

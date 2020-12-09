@@ -36,7 +36,14 @@ function Collector(now)
 		spanCollect.apply(this, ['all', 7, 30000, date, value]);
 		spanCollect.apply(this, ['twoWeeks', 7, 21, date, value]);
 		spanCollect.apply(this, ['today', 0, 0, date, value]);
-		spanCollect.apply(this, ['4+', 29, 30000, date, value]);
+		spanCollect.apply(this, ['150+', 1051, 999999, date, value]);
+		spanCollect.apply(this, ['100-150', 701, 1050, date, value]);
+		spanCollect.apply(this, ['72-100', 504, 700, date, value]);
+		spanCollect.apply(this, ['60-72', 421, 504, date, value]);
+		spanCollect.apply(this, ['48-60', 337, 420, date, value]);
+		spanCollect.apply(this, ['24-48', 169, 336, date, value]);
+		spanCollect.apply(this, ['12-24', 85, 168, date, value]);
+		spanCollect.apply(this, ['4-12', 29, 84, date, value]);
 		spanCollect.apply(this, ['3-4', 21, 28, date, value]);
 		spanCollect.apply(this, ['2-3', 14, 20, date, value]);
 		spanCollect.apply(this, ['1-2', 7, 13, date, value]);
@@ -118,8 +125,8 @@ angular.module('graph', []).directive('myGraph', function() {
 					var range = $scope.collector.getGlobalRange(bucketNames);
 					$scope.globalMin = range[0];
 					$scope.globalMax = range[1];
-					$scope.barWidth = 300;
-					$scope.kgToPixelFactor = 300 / ($scope.globalMax - $scope.globalMin);
+					$scope.barWidth = 700;
+					$scope.kgToPixelFactor = $scope.barWidth / ($scope.globalMax - $scope.globalMin);
 				} catch(error) {
 
 				}
