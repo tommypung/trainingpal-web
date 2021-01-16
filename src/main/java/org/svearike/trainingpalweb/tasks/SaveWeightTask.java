@@ -104,6 +104,7 @@ public class SaveWeightTask implements DeferredTask
 					{
 						user.setProperty("lastWeight", Float.parseFloat(mWeight));
 						user.setProperty("lastWeightDate", mDate);
+						return true;
 					}
 					return false;
 				}
